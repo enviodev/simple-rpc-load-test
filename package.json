@@ -2,10 +2,13 @@
   "name": "rpc-performance-test",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "usdc-approvals": "ts-node src/index.ts $RPC_URL usdc-approvals"
+    "usdc-approvals": "ts-node src/getLog/index.ts $RPC_URL usdc-approvals",
+    "usdc-aave-withdrawals": "ts-node src/getLog/index.ts $RPC_URL usdc-aave-withdrawals",
+    "usdc-some-random-users-transfers": "ts-node src/getLog/index.ts $RPC_URL usdc-some-random-users-transfers",
+    "basenames-discounts": "ts-node src/getLog/index.ts $RPC_URL basenames-discounts",
+    "getBlockReceipts": "ts-node src/getBlockReceipts/index.ts $RPC_URL",
+    "getBlockByNumber": "ts-node src/getBlockByNumber/index.ts $RPC_URL"
   },
   "keywords": [],
   "author": "",

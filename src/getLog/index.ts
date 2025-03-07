@@ -1,4 +1,10 @@
-const config = require("./config");
+import { performance } from 'perf_hooks';
+import { updateProgressBar, createBlocksList, displayStats } from '../lib/utils';
+
+// Get command line arguments
+const args = process.argv.slice(2);
+const rpcUrl = args[0];
+const config = require("../lib/config");
 
 interface EthGetLogsParams {
   fromBlock: string;
@@ -33,40 +39,8 @@ async function fetchLogs(params: EthGetLogsParams): Promise<number> {
   return end - start;
 }
 
-function createBlocksList(
-  startBlock: number,
-  endBlock: number,
-  chunkSize: number
-): Array<[number, number]> {
-  const ranges: Array<[number, number]> = [];
-  let currentStart = startBlock;
-  while (currentStart <= endBlock) {
-    const currentEnd = Math.min(currentStart + chunkSize - 1, endBlock);
-    ranges.push([currentStart, currentEnd]);
-    currentStart = currentEnd + 1;
-  }
-  return ranges;
-}
-
-function updateProgressBar(completed: number, total: number, barWidth = 100): void {
-  const percent = completed / total;
-  const filledLength = Math.round(percent * barWidth);
-  const bar = "=".repeat(filledLength) + "-".repeat(barWidth - filledLength);
-
-  // Clear the current line and move cursor to start of it
-  process.stdout.clearLine(0);
-  process.stdout.cursorTo(0);
-
-  // Write out the bar plus a percentage, e.g. [=====-----] 42.00%
-  process.stdout.write(`[${bar}] ${(percent * 100).toFixed(2)}% (${completed}/${total})`);
-
-  // If completed, move to a new line
-  if (completed === total) {
-    process.stdout.write("\n");
-  }
-}
-
 async function runTest() {
+  console.log("config", config)
   const { addresses, topics, concurrency, startBlock, endBlock, chunkSize } =
     config;
 
