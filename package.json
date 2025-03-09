@@ -5,7 +5,7 @@
   "scripts": {
     "usdc-approvals": "ts-node src/getLog/index.ts $RPC_URL usdc-approvals",
     "usdc-aave-withdrawals": "ts-node src/getLog/index.ts $RPC_URL usdc-aave-withdrawals",
-    "usdc-some-random-users-transfers": "ts-node src/getLog/index.ts $RPC_URL usdc-some-random-users-transfers",
+    "user-token-transfers": "ts-node src/getLog/index.ts $RPC_URL user-token-transfers",
     "basenames-discounts": "ts-node src/getLog/index.ts $RPC_URL basenames-discounts",
     "getBlockReceipts": "ts-node src/getBlockReceipts/index.ts $RPC_URL",
     "getBlockByNumber": "ts-node src/getBlockByNumber/index.ts $RPC_URL"

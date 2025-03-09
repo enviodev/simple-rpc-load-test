@@ -4,21 +4,26 @@ import { BaseConfig } from './config';
 /**
  * Updates a progress bar in the console
  */
-export function updateProgressBar(completed: number, total: number, barWidth = 100): void {
+export function updateProgressBar(completed: number, total: number, additionalInfo: string = "", barWidth = 100): void {
   const percent = completed / total;
   const filledLength = Math.round(percent * barWidth);
   const bar = "=".repeat(filledLength) + "-".repeat(barWidth - filledLength);
 
-  // Clear the current line and move cursor to start of it
-  process.stdout.clearLine(0);
-  process.stdout.cursorTo(0);
+  try {
+    // Clear the current line and move cursor to start of it
+    process.stdout.write('\r');  // Move to the beginning of the line
 
-  // Write out the bar plus a percentage, e.g. [=====-----] 42.00%
-  process.stdout.write(`[${bar}] ${(percent * 100).toFixed(2)}% (${completed}/${total})`);
+    // Write out the bar plus a percentage - make sure to pad with spaces to overwrite previous content
+    const output = `[${bar}] ${(percent * 100).toFixed(2)}% (${completed}/${total}) ${additionalInfo}`;
+    process.stdout.write(output.padEnd(process.stdout.columns || 120, ' '));
 
-  // If completed, move to a new line
-  if (completed === total) {
-    process.stdout.write("\n");
+    // If completed, move to a new line
+    if (completed === total) {
+      process.stdout.write("\n");
+    }
+  } catch (error) {
+    // Fallback for environments where process.stdout methods might not be available
+    console.log(`Progress: ${(percent * 100).toFixed(2)}% (${completed}/${total}) ${additionalInfo}`);
   }
 }
 
@@ -28,20 +33,21 @@ export function updateProgressBar(completed: number, total: number, barWidth = 1
 export function createBlocksList(
   startBlock: number,
   endBlock: number,
-  chunkSize: number = 100
+  blockRange: number = 1000,
+  batchSize: number = 100
 ): Array<number[]> {
   const blocks: Array<number[]> = [];
 
-  if (chunkSize <= 1) {
+  if (blockRange <= 1) {
     // Return individual blocks
     for (let i = startBlock; i <= endBlock; i++) {
       blocks.push([i]);
     }
   } else {
     // Return chunks of blocks
-    for (let i = startBlock; i <= endBlock; i += chunkSize) {
+    for (let i = startBlock; i <= endBlock; i += blockRange) {
       const chunk = [];
-      for (let j = 0; j < chunkSize && i + j <= endBlock; j++) {
+      for (let j = 0; j < blockRange && i + j <= endBlock; j++) {
         chunk.push(i + j);
       }
       blocks.push(chunk);
@@ -50,6 +56,42 @@ export function createBlocksList(
 
   return blocks;
 }
+
+
+/**
+ * Creates a list of block ranges for log processing
+ * Returns a 2D array:
+ * - Outer array: Each HTTP request batch
+ * - Inner array: Each RPC method call within the batch (block range)
+ */
+export function createBlocksListLogs(
+  startBlock: number,
+  endBlock: number,
+  blockRange: number = 1000,
+  batchSize: number = 1
+): Array<Array<[number, number]>> {
+  console.log(startBlock, endBlock, blockRange, batchSize)
+  // First create all the individual block ranges
+  const ranges: Array<[number, number]> = [];
+  let currentStart = startBlock;
+
+  while (currentStart <= endBlock) {
+    const currentEnd = Math.min(currentStart + blockRange - 1, endBlock);
+    ranges.push([currentStart, currentEnd]);
+    currentStart = currentEnd + 1;
+  }
+
+  // Now group these ranges into batches
+  const batches: Array<Array<[number, number]>> = [];
+
+  for (let i = 0; i < ranges.length; i += batchSize) {
+    batches.push(ranges.slice(i, i + batchSize));
+  }
+  console.log(batches)
+
+  return batches;
+}
+
 
 /**
  * Calculates and displays statistics for request durations
@@ -118,10 +160,10 @@ export async function runRpcTest(
 - Start Block: ${config.startBlock}
 - End Block: ${config.endBlock}
 - Concurrency: ${config.concurrency}
-- Chunk Size: ${config.chunkSize}
+- Chunk Size: ${config.batchSize}
 `);
 
-  const blockChunks = createBlocksList(config.startBlock, config.endBlock, config.chunkSize);
+  const blockChunks = createBlocksList(config.startBlock, config.endBlock, config.batchSize);
   const totalBlocks = config.endBlock - config.startBlock + 1;
 
   const durations: number[] = [];
@@ -133,7 +175,7 @@ export async function runRpcTest(
 
   return new Promise<void>((resolve, reject) => {
     // Dispatch function that processes the next chunk if available
-    const dispatch = async () => {
+    const dispatch = () => {
       // While there are chunks left and we can spawn more requests:
       while (activeRequests < config.concurrency && index < blockChunks.length) {
         activeRequests++;
@@ -145,7 +187,7 @@ export async function runRpcTest(
             dispatch(); // Attempt to queue up next chunk
             durations.push(duration);
             processedChunks++;
-            updateProgressBar(processedChunks, blockChunks.length);
+            updateProgressBar(processedChunks, blockChunks.length, `Latest Request End Block: ${blockNumbers[blockNumbers.length - 1]}`);
           })
           .catch((err) => {
             console.error(`Error processing blocks ${blockNumbers.join(',')}:`, err);

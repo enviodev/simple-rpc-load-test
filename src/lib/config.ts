@@ -17,7 +17,7 @@ export type BaseConfig = {
   concurrency: number;
   startBlock: number;
   endBlock: number;
-  chunkSize: number;
+  batchSize: number;
 }
 
 // Specific configuration for getLogs
@@ -27,7 +27,7 @@ export type LogsConfig = BaseConfig & {
 }
 
 // Parse environment variables with validation
-export function parseBaseConfig(defaultStartBlock = 0, defaultEndBlock = 1000, defaultChunkSize = 100): BaseConfig {
+export function parseBaseConfig(defaultStartBlock = 0, defaultEndBlock = 1000, defaultbatchSize = 100): BaseConfig {
 
   if (!rpcUrl) {
     console.error('Error: RPC URL is required as the first argument');
@@ -59,19 +59,19 @@ export function parseBaseConfig(defaultStartBlock = 0, defaultEndBlock = 1000, d
     defaultEndBlock;
 
   // Get chunk size from environment variable or use default
-  const chunkSizeEnv = process.env.CHUNK_SIZE;
-  const chunkSize = chunkSizeEnv ?
-    (isNaN(Number(chunkSizeEnv)) || Number(chunkSizeEnv) < 1 ?
+  const batchSizeEnv = process.env.CHUNK_SIZE;
+  const batchSize = batchSizeEnv ?
+    (isNaN(Number(batchSizeEnv)) || Number(batchSizeEnv) < 1 ?
       (console.error("CHUNK_SIZE environment variable must be a positive number"), process.exit(1), 0) :
-      Number(chunkSizeEnv)) :
-    defaultChunkSize;
+      Number(batchSizeEnv)) :
+    defaultbatchSize;
 
   return {
     rpcUrl,
     concurrency,
     startBlock,
     endBlock,
-    chunkSize
+    batchSize
   };
 }
 
@@ -82,7 +82,7 @@ type scenario = {
   concurrency: number;
   startBlock: number;
   endBlock: number;
-  chunkSize: number;
+  batchSize: number;
 }
 
 // Define scenario configurations with RPC URL as a parameter
@@ -90,11 +90,14 @@ export const createScenario = () => {
   // Get environment variables for optional overrides
   const startBlockEnv = process.env.START_BLOCK ? Number(process.env.START_BLOCK) : undefined;
   const endBlockEnv = process.env.END_BLOCK ? Number(process.env.END_BLOCK) : undefined;
-  const chunkSizeEnv = process.env.CHUNK_SIZE ? Number(process.env.CHUNK_SIZE) : undefined;
+  const batchSizeEnv = process.env.CHUNK_SIZE ? Number(process.env.CHUNK_SIZE) : undefined;
 
-  const { concurrency, startBlock, endBlock, chunkSize } = parseBaseConfig(0, 27241550, 1_000)
+  const blockRange = 1000
+
+  let concurrency, startBlock, endBlock, batchSize
   switch (scenarioName) {
     case "usdc-approvals":
+      ({ concurrency, startBlock, endBlock, batchSize } = parseBaseConfig(2797221, 24277300, 100))
       return {
         rpcUrl,
         addresses: ["0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"],
@@ -104,22 +107,26 @@ export const createScenario = () => {
         concurrency,
         startBlock,
         endBlock,
-        chunkSize,
+        batchSize,
+        blockRange
       };
     case "usdc-aave-withdrawals":
+      ({ concurrency, startBlock, endBlock, batchSize } = parseBaseConfig(8192239, 24277300, 100))
       return {
         rpcUrl,
         addresses: ["0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"],
         topics: [
           "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-          "0x00000000000000000000000055b33c314560016688d4764f1eae288ad49576ac"
+          "0x0000000000000000000000004e65fE4DbA92790696d040ac24Aa414708F5c0AB"
         ],
         concurrency,
         startBlock,
         endBlock,
-        chunkSize,
+        batchSize,
+        blockRange
       };
-    case "usdc-user-transfers":
+    case "user-token-transfers":
+      ({ concurrency, startBlock, endBlock, batchSize } = parseBaseConfig(9399440, 24277300, 100))
       return {
         rpcUrl,
         addresses: [
@@ -143,12 +150,13 @@ export const createScenario = () => {
         ],
         topics: [
           "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-          "0x0000000000000000000000Lol, should we ban0014c5Ca9F70dFc36Ce5919A460CF2E48D7e933cEE"
+          "0x00000000000000000000000014c5Ca9F70dFc36Ce5919A460CF2E48D7e933cEE"
         ],
         concurrency,
         startBlock,
         endBlock,
-        chunkSize,
+        batchSize,
+        blockRange
       };
       break;
     case "basenames-discounts":
@@ -161,10 +169,12 @@ export const createScenario = () => {
         concurrency,
         startBlock,
         endBlock,
-        chunkSize,
+        batchSize,
+        blockRange
       };
     default:
-      throw new Error(`Scenario "${scenarioName}" not found. Check spelling.`);
+      console.log(`Scenario "${scenarioName}" not found. Using default configuration.`);
+      ({ concurrency, startBlock, endBlock, batchSize } = parseBaseConfig(1000000, 1001000, 100))
       return {
         rpcUrl,
         addresses: ["0xYourContractAddress1", "0xYourContractAddress2"],
@@ -174,12 +184,11 @@ export const createScenario = () => {
         concurrency,
         startBlock,
         endBlock,
-        chunkSize,
+        batchSize,
+        blockRange
       };
   }
 };
 
 // Default export that requires RPC URL to be passed
-const finalConfig: scenario = createScenario();
-console.log("finalConfig", finalConfig)
-module.exports = finalConfig;
+module.exports.default = createScenario;
