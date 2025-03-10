@@ -4,8 +4,8 @@ import { updateProgressBar, createBlocksListLogs, displayStats } from '../lib/ut
 // Get command line arguments
 const args = process.argv.slice(2);
 const rpcUrl = args[0];
-const getLogsConfig = require("../lib/config");
-const config = getLogsConfig();
+const { createScenario } = require("../lib/config");
+const config = createScenario();
 
 interface BlockRange {
   fromBlock: string;

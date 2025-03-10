@@ -70,7 +70,6 @@ export function createBlocksListLogs(
   blockRange: number = 1000,
   batchSize: number = 1
 ): Array<Array<[number, number]>> {
-  console.log(startBlock, endBlock, blockRange, batchSize)
   // First create all the individual block ranges
   const ranges: Array<[number, number]> = [];
   let currentStart = startBlock;
@@ -87,7 +86,6 @@ export function createBlocksListLogs(
   for (let i = 0; i < ranges.length; i += batchSize) {
     batches.push(ranges.slice(i, i + batchSize));
   }
-  console.log(batches)
 
   return batches;
 }

@@ -1,12 +1,8 @@
 // Get command line arguments
 const args = process.argv.slice(2);
 
-console.log("args", args)
 const rpcUrl = args[0];
 const scenarioName = args[1] || 'default';
-
-console.log("rpcUrl", rpcUrl)
-console.log("scenarioName", scenarioName)
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -83,10 +79,11 @@ type scenario = {
   startBlock: number;
   endBlock: number;
   batchSize: number;
+  blockRange: number;
 }
 
 // Define scenario configurations with RPC URL as a parameter
-export const createScenario = () => {
+export const createScenario = (): scenario => {
   // Get environment variables for optional overrides
   const startBlockEnv = process.env.START_BLOCK ? Number(process.env.START_BLOCK) : undefined;
   const endBlockEnv = process.env.END_BLOCK ? Number(process.env.END_BLOCK) : undefined;
@@ -160,9 +157,12 @@ export const createScenario = () => {
       };
       break;
     case "basenames-discounts":
+      ({ concurrency, startBlock, endBlock, batchSize } = parseBaseConfig(17571486, 24277300, 100))
+
       return {
         rpcUrl,
-        addresses: ["0x2B7704f1cb9324cD8586B33C6c540CbD64E58237"],
+        addresses: ["0x4cCb0BB02FCABA27e82a56646E81d8c5bC4119a5"],
+        // addresses: ["0x03c4738Ee98aE44591e1A4A4F3CaB6641d95DD9a"],
         topics: [
           "0xfe82878a5987cea7129c337d7aaa6a49585236fc104b066223bc5b5e49510e2b"
         ],
@@ -189,6 +189,3 @@ export const createScenario = () => {
       };
   }
 };
-
-// Default export that requires RPC URL to be passed
-module.exports.default = createScenario;
