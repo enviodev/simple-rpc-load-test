@@ -128,8 +128,8 @@ async function runTest() {
             updateProgressBar(
               index,
               blockRanges.length,
-              `Logs: ${totalLogs}, Blocks: ${totalBlocksScanned}` +
-              `Batch ${index}/${blockRanges.length}: Blocks ${result.fromBlock}-${result.toBlock}, totalLogsFound ${totalLogs}` +
+              `Logs: ${totalLogs}, Blocks: ${totalBlocksScanned} | ` +
+              `Batch ${index}/${blockRanges.length}: Blocks ${result.fromBlock}-${result.toBlock} | ` +
               `Latest request found ${result.logsCount} logs - Took ${result.duration.toFixed(2)}ms`
             );
           })

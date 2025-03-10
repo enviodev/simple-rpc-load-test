@@ -5,6 +5,14 @@ import { BaseConfig } from './config';
  * Updates a progress bar in the console
  */
 export function updateProgressBar(completed: number, total: number, additionalInfo: string = "", barWidth = 100): void {
+  // Check if progress bar is disabled via environment variable
+  const showProgressBar = process.env.SHOW_PROGRESS_BAR !== 'false';
+
+  // If progress bar is disabled, just return
+  if (!showProgressBar) {
+    return;
+  }
+
   const percent = completed / total;
   const filledLength = Math.round(percent * barWidth);
   const bar = "=".repeat(filledLength) + "-".repeat(barWidth - filledLength);
